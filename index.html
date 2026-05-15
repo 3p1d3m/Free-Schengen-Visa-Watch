@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schengen Slot Watcher — Free Visa Appointment Alerts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:     #0a0a0f;
+    --paper:   #f5f2eb;
+    --accent:  #1a3fff;
+    --green:   #00c853;
+    --muted:   #6b6b78;
+    --border:  #d8d4c8;
+    --card:    #fdfbf7;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: .5;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 48px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(245,242,235,.92);
+    backdrop-filter: blur(12px);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 17px;
+    letter-spacing: -.3px;
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: var(--ink);
+  }
+  .logo-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 0 rgba(0,200,83,.4);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(0,200,83,.4); }
+    50%      { box-shadow: 0 0 0 8px rgba(0,200,83,0); }
+  }
+  .nav-cta {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px; font-weight: 500;
+    background: var(--ink); color: var(--paper);
+    border: none; border-radius: 6px;
+    padding: 10px 20px; cursor: pointer;
+    text-decoration: none;
+    transition: background .2s, transform .15s;
+  }
+  .nav-cta:hover { background: var(--accent); transform: translateY(-1px); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 120px 48px 80px;
+    gap: 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+    border: 1px solid var(--border);
+    padding: 6px 14px; border-radius: 100px;
+    margin-bottom: 28px;
+    color: var(--muted);
+    opacity: 0; animation: fadeUp .6s .1s forwards;
+  }
+  .hero-tag span { color: var(--green); font-weight: 500; }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(42px, 5vw, 68px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 28px;
+    opacity: 0; animation: fadeUp .6s .2s forwards;
+  }
+  h1 em {
+    font-style: normal;
+    color: var(--accent);
+    position: relative;
+  }
+  h1 em::after {
+    content: '';
+    position: absolute; bottom: 2px; left: 0; right: 0;
+    height: 3px; background: var(--accent); border-radius: 2px;
+    transform: scaleX(0); transform-origin: left;
+    animation: underlineIn .5s .8s forwards;
+  }
+  @keyframes underlineIn { to { transform: scaleX(1); } }
+
+  .hero-sub {
+    font-size: 16px; color: var(--muted); line-height: 1.7;
+    max-width: 480px; margin-bottom: 40px;
+    opacity: 0; animation: fadeUp .6s .3s forwards;
+  }
+
+  .hero-actions {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    opacity: 0; animation: fadeUp .6s .4s forwards;
+  }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--ink); color: var(--paper);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px; font-weight: 500;
+    padding: 16px 32px; border-radius: 8px;
+    text-decoration: none; border: none; cursor: pointer;
+    transition: background .2s, transform .15s, box-shadow .2s;
+  }
+  .btn-primary:hover {
+    background: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(26,63,255,.25);
+  }
+  .btn-primary svg { width: 20px; height: 20px; }
+
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--muted); font-size: 13px;
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2px;
+    transition: color .2s, border-color .2s;
+  }
+  .btn-ghost:hover { color: var(--ink); border-color: var(--ink); }
+
+  /* ── PHONE MOCKUP ── */
+  .hero-visual {
+    display: flex; justify-content: center; align-items: center;
+    opacity: 0; animation: fadeUp .7s .5s forwards;
+  }
+
+  .phone {
+    width: 280px;
+    background: var(--ink);
+    border-radius: 36px;
+    padding: 16px;
+    box-shadow:
+      0 40px 80px rgba(0,0,0,.25),
+      0 0 0 1px rgba(255,255,255,.05);
+    position: relative;
+  }
+  .phone-screen {
+    background: #1a1a2e;
+    border-radius: 24px;
+    overflow: hidden;
+    padding: 0;
+  }
+  .phone-bar {
+    background: #0f0f1e;
+    padding: 12px 16px 10px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .phone-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--green));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .phone-name { color: #fff; font-size: 13px; font-weight: 500; }
+  .phone-status { color: var(--green); font-size: 11px; }
+
+  .phone-messages { padding: 14px 12px; display: flex; flex-direction: column; gap: 10px; }
+
+  .msg {
+    border-radius: 12px; padding: 10px 12px;
+    font-size: 12px; line-height: 1.5;
+    max-width: 90%;
+    animation: msgIn .4s ease both;
+  }
+  .msg-bot {
+    background: #252540; color: #e8e8f0;
+    border-bottom-left-radius: 3px;
+    align-self: flex-start;
+  }
+  .msg-alert {
+    background: linear-gradient(135deg, #1a3fff22, #00c85322);
+    border: 1px solid rgba(0,200,83,.3);
+    color: #e8e8f0;
+    border-bottom-left-radius: 3px;
+    align-self: flex-start;
+  }
+  .msg strong { color: var(--green); }
+  .msg-time { font-size: 10px; color: #666; margin-top: 3px; }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .msg:nth-child(1) { animation-delay: .8s; }
+  .msg:nth-child(2) { animation-delay: 1.2s; }
+  .msg:nth-child(3) { animation-delay: 1.6s; }
+
+  /* ── TICKER ── */
+  .ticker-wrap {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 0;
+    overflow: hidden;
+    white-space: nowrap;
+    background: var(--ink); color: var(--paper);
+  }
+  .ticker {
+    display: inline-flex; gap: 48px;
+    animation: ticker 25s linear infinite;
+    font-size: 13px; letter-spacing: .05em;
+  }
+  .ticker-item { display: flex; align-items: center; gap: 12px; }
+  .ticker-item span { color: var(--green); }
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* ── HOW IT WORKS ── */
+  section { padding: 100px 48px; max-width: 1200px; margin: 0 auto; }
+
+  .section-label {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(30px, 4vw, 48px);
+    font-weight: 800; letter-spacing: -1.5px;
+    line-height: 1.1; margin-bottom: 64px;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 2px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .step {
+    background: var(--card);
+    padding: 36px 32px;
+    border-right: 1px solid var(--border);
+    position: relative;
+    transition: background .2s;
+  }
+  .step:last-child { border-right: none; }
+  .step:hover { background: #fff; }
+  .step-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 48px; font-weight: 800;
+    color: var(--border); line-height: 1;
+    margin-bottom: 20px;
+  }
+  .step h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .step p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+  /* ── COUNTRIES GRID ── */
+  .countries-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
+  .country-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px;
+    transition: border-color .2s, transform .15s;
+    cursor: default;
+  }
+  .country-chip:hover {
+    border-color: var(--ink);
+    transform: translateY(-2px);
+  }
+  .country-chip .flag { font-size: 20px; }
+  .country-chip .prov {
+    font-size: 10px; color: var(--muted);
+    margin-top: 2px; display: block;
+  }
+
+  /* ── STATS ── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2px;
+    border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+    margin-top: 64px;
+  }
+  .stat {
+    background: var(--card); padding: 40px 36px;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 52px; font-weight: 800;
+    letter-spacing: -2px; line-height: 1;
+    margin-bottom: 8px;
+  }
+  .stat-label { font-size: 13px; color: var(--muted); }
+
+  /* ── OPEN SOURCE ── */
+  .opensource {
+    background: var(--ink); color: var(--paper);
+    border-radius: 16px; padding: 64px;
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: center; gap: 48px;
+  }
+  .opensource h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 3vw, 40px);
+    font-weight: 800; letter-spacing: -1px;
+    margin-bottom: 16px;
+  }
+  .opensource p { color: #888; font-size: 14px; max-width: 480px; line-height: 1.7; }
+  .github-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--paper); color: var(--ink);
+    font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500;
+    padding: 16px 28px; border-radius: 8px;
+    text-decoration: none; white-space: nowrap;
+    transition: background .2s, transform .15s;
+    flex-shrink: 0;
+  }
+  .github-btn:hover { background: #fff; transform: translateY(-2px); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px; color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--ink); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .hero { grid-template-columns: 1fr; padding: 100px 20px 60px; gap: 48px; }
+    .hero-visual { order: -1; }
+    .phone { width: 240px; }
+    section { padding: 64px 20px; }
+    .opensource { grid-template-columns: 1fr; padding: 40px; }
+    footer { flex-direction: column; gap: 12px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-dot"></div>
+    SlotWatcher
+  </a>
+  <a href="https://t.me/YOUR_BOT_USERNAME" class="nav-cta" target="_blank">
+    Open in Telegram →
+  </a>
+</nav>
+
+<!-- HERO -->
+<div class="hero" style="padding-top:140px;">
+  <div>
+    <div class="hero-tag">
+      <div class="logo-dot" style="width:7px;height:7px;"></div>
+      <span>Live</span> — scanning every 2 minutes
+    </div>
+    <h1>Schengen slots.<br><em>Found first.</em></h1>
+    <p class="hero-sub">
+      A free Telegram bot that scans all 29 Schengen countries simultaneously
+      and alerts you the instant a visa appointment opens — ranked by earliest date.
+    </p>
+    <div class="hero-actions">
+      <a href="https://t.me/YOUR_BOT_USERNAME" class="btn-primary" target="_blank">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.932z"/>
+        </svg>
+        Start for free on Telegram
+      </a>
+      <a href="https://github.com/YOUR_USERNAME/schengen-visa-bot" class="btn-ghost" target="_blank">
+        View source on GitHub ↗
+      </a>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="phone-bar">
+          <div class="phone-avatar">🛂</div>
+          <div>
+            <div class="phone-name">SlotWatcher</div>
+            <div class="phone-status">● online</div>
+          </div>
+        </div>
+        <div class="phone-messages">
+          <div class="msg msg-bot">
+            ✅ <strong>Subscribed!</strong><br>
+            Watching all 29 Schengen countries. I'll alert you the moment a slot opens.
+            <div class="msg-time">08:01</div>
+          </div>
+          <div class="msg msg-alert">
+            🚨 <strong>SLOTS FOUND!</strong><br><br>
+            1. 🇳🇱 Netherlands — VFS<br>
+            &nbsp;&nbsp;&nbsp;📅 20 May · 09:00<br>
+            &nbsp;&nbsp;&nbsp;🔗 Book now<br><br>
+            2. 🇵🇹 Portugal — VFS<br>
+            &nbsp;&nbsp;&nbsp;📅 23 May · 11:30<br>
+            &nbsp;&nbsp;&nbsp;🔗 Book now<br><br>
+            ⚡ Act fast!
+            <div class="msg-time">08:04</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <div class="ticker-item">🇩🇪 Germany <span>VFS Global</span></div>
+    <div class="ticker-item">🇫🇷 France <span>TLScontact</span></div>
+    <div class="ticker-item">🇮🇹 Italy <span>VFS Global</span></div>
+    <div class="ticker-item">🇳🇱 Netherlands <span>VFS Global</span></div>
+    <div class="ticker-item">🇪🇸 Spain <span>VFS Global</span></div>
+    <div class="ticker-item">🇨🇭 Switzerland <span>TLScontact</span></div>
+    <div class="ticker-item">🇵🇹 Portugal <span>VFS Global</span></div>
+    <div class="ticker-item">🇦🇹 Austria <span>VFS Global</span></div>
+    <div class="ticker-item">🇧🇪 Belgium <span>VFS Global</span></div>
+    <div class="ticker-item">🇸🇪 Sweden <span>VFS Global</span></div>
+    <div class="ticker-item">🇵🇱 Poland <span>VFS Global</span></div>
+    <div class="ticker-item">🇬🇷 Greece <span>VFS Global</span></div>
+    <div class="ticker-item">🇩🇰 Denmark <span>VFS Global</span></div>
+    <div class="ticker-item">🇫🇮 Finland <span>VFS Global</span></div>
+    <!-- repeat for seamless loop -->
+    <div class="ticker-item">🇩🇪 Germany <span>VFS Global</span></div>
+    <div class="ticker-item">🇫🇷 France <span>TLScontact</span></div>
+    <div class="ticker-item">🇮🇹 Italy <span>VFS Global</span></div>
+    <div class="ticker-item">🇳🇱 Netherlands <span>VFS Global</span></div>
+    <div class="ticker-item">🇪🇸 Spain <span>VFS Global</span></div>
+    <div class="ticker-item">🇨🇭 Switzerland <span>TLScontact</span></div>
+    <div class="ticker-item">🇵🇹 Portugal <span>VFS Global</span></div>
+    <div class="ticker-item">🇦🇹 Austria <span>VFS Global</span></div>
+    <div class="ticker-item">🇧🇪 Belgium <span>VFS Global</span></div>
+    <div class="ticker-item">🇸🇪 Sweden <span>VFS Global</span></div>
+    <div class="ticker-item">🇵🇱 Poland <span>VFS Global</span></div>
+    <div class="ticker-item">🇬🇷 Greece <span>VFS Global</span></div>
+    <div class="ticker-item">🇩🇰 Denmark <span>VFS Global</span></div>
+    <div class="ticker-item">🇫🇮 Finland <span>VFS Global</span></div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section>
+  <div class="section-label">How it works</div>
+  <div class="section-title">Three steps.<br>Zero hassle.</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h3>Open the bot</h3>
+      <p>Find it on Telegram and tap Start. No account, no email, no app to install.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h3>Subscribe</h3>
+      <p>One tap. The bot immediately begins scanning all 29 Schengen countries every 2 minutes.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h3>Get notified</h3>
+      <p>The moment a slot opens anywhere, you receive a ranked list with direct booking links.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <h3>Book instantly</h3>
+      <p>Tap the link in the notification. Slots go fast — you'll be there first.</p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">29</div>
+      <div class="stat-label">Schengen countries monitored</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">2m</div>
+      <div class="stat-label">Scan interval</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">3</div>
+      <div class="stat-label">Providers covered (VFS, TLS, Embassy)</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">£0</div>
+      <div class="stat-label">Cost — completely free</div>
+    </div>
+  </div>
+</section>
+
+<!-- COUNTRIES -->
+<section style="padding-top:0;">
+  <div class="section-label">Coverage</div>
+  <div class="section-title">All 29 countries.<br>One subscription.</div>
+  <div class="countries-grid">
+    <div class="country-chip"><span class="flag">🇦🇹</span><div><div>Austria</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇧🇪</span><div><div>Belgium</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇧🇬</span><div><div>Bulgaria</div><span class="prov">Embassy</span></div></div>
+    <div class="country-chip"><span class="flag">🇭🇷</span><div><div>Croatia</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇨🇿</span><div><div>Czech Rep.</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇩🇰</span><div><div>Denmark</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇪🇪</span><div><div>Estonia</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇫🇮</span><div><div>Finland</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇫🇷</span><div><div>France</div><span class="prov">TLScontact</span></div></div>
+    <div class="country-chip"><span class="flag">🇩🇪</span><div><div>Germany</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇬🇷</span><div><div>Greece</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇭🇺</span><div><div>Hungary</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇮🇸</span><div><div>Iceland</div><span class="prov">Embassy</span></div></div>
+    <div class="country-chip"><span class="flag">🇮🇹</span><div><div>Italy</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇱🇻</span><div><div>Latvia</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇱🇮</span><div><div>Liechtenstein</div><span class="prov">via Swiss</span></div></div>
+    <div class="country-chip"><span class="flag">🇱🇹</span><div><div>Lithuania</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇱🇺</span><div><div>Luxembourg</div><span class="prov">TLScontact</span></div></div>
+    <div class="country-chip"><span class="flag">🇲🇹</span><div><div>Malta</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇳🇱</span><div><div>Netherlands</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇳🇴</span><div><div>Norway</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇵🇱</span><div><div>Poland</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇵🇹</span><div><div>Portugal</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇷🇴</span><div><div>Romania</div><span class="prov">Embassy</span></div></div>
+    <div class="country-chip"><span class="flag">🇸🇰</span><div><div>Slovakia</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇸🇮</span><div><div>Slovenia</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇪🇸</span><div><div>Spain</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇸🇪</span><div><div>Sweden</div><span class="prov">VFS Global</span></div></div>
+    <div class="country-chip"><span class="flag">🇨🇭</span><div><div>Switzerland</div><span class="prov">TLScontact</span></div></div>
+  </div>
+</section>
+
+<!-- OPEN SOURCE -->
+<section style="padding-top:0;">
+  <div class="opensource">
+    <div>
+      <h2>Open source.<br>Self-hostable.</h2>
+      <p>
+        The full source code is on GitHub — free to inspect, fork, and deploy yourself.
+        No black boxes, no paywalls. If something breaks or a portal URL changes,
+        anyone can fix it.
+      </p>
+    </div>
+    <a href="https://github.com/YOUR_USERNAME/schengen-visa-bot" class="github-btn" target="_blank">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+      </svg>
+      View on GitHub
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>© 2026 SlotWatcher · Free & open source · MIT License</div>
+  <div style="display:flex;gap:24px;">
+    <a href="https://github.com/YOUR_USERNAME/schengen-visa-bot" target="_blank">GitHub</a>
+    <a href="https://t.me/YOUR_BOT_USERNAME" target="_blank">Telegram Bot</a>
+    <a href="#">Disclaimer</a>
+  </div>
+</footer>
+
+</body>
+</html>

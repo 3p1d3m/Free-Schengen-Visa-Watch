@@ -1,0 +1,17 @@
+# Secrets — never commit these
+.env
+subscribers.json
+bot.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
