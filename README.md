@@ -1,4 +1,4 @@
-# 🛂 Schengen Visa Appointment Notifier
+# 🛂 UK Schengen SlotWatcher
 
 A free, open-source Telegram bot that scans **all 29 Schengen countries simultaneously** for open visa appointment slots and sends instant notifications ranked by the earliest available date.
 
@@ -8,9 +8,13 @@ A free, open-source Telegram bot that scans **all 29 Schengen countries simultan
 
 ## 🚀 Use it instantly
 
-Just open Telegram and start the bot — no setup required:
+Just open Telegram — no setup, no account, no app to install:
 
-👉 **[t.me/YOUR_BOT_USERNAME](https://t.me/YOUR_BOT_USERNAME)**
+👉 **[t.me/Schenwatch_bot](https://t.me/Schenwatch_bot)**
+
+Or visit the website:
+
+👉 **[3p1d3m.github.io/Free-Schengen-Visa-Watch](https://3p1d3m.github.io/Free-Schengen-Visa-Watch)**
 
 ---
 
@@ -21,8 +25,19 @@ Just open Telegram and start the bot — no setup required:
 - 📊 Results ranked by earliest available date
 - 🏢 Covers VFS Global, TLScontact & Embassy Direct
 - 🔔 Instant Telegram notifications
-- ☀️ Daily morning status summary
+- ☀️ Daily morning status summary at 08:00
 - 100% free and open source
+
+---
+
+## 🤖 Bot Commands
+
+| Command | Description |
+|---|---|
+| `/start` | Show the main menu |
+| `/check` | Scan all countries right now |
+| `/unsubscribe` | Stop all alerts |
+| `/help` | Show help |
 
 ---
 
@@ -30,8 +45,8 @@ Just open Telegram and start the bot — no setup required:
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/YOUR_USERNAME/schengen-visa-bot.git
-cd schengen-visa-bot
+git clone https://github.com/3p1d3m/Free-Schengen-Visa-Watch.git
+cd Free-Schengen-Visa-Watch
 ```
 
 ### 2. Install dependencies
@@ -54,12 +69,11 @@ python bot.py
 ```
 
 ### Deploy free on Railway (24/7)
-```bash
-npm i -g @railway/cli
-railway login && railway init
-railway add --env BOT_TOKEN=your_token
-railway up
-```
+1. Go to [railway.app](https://railway.app) and sign in with GitHub
+2. Click **New Project → Deploy from GitHub repo**
+3. Select this repo
+4. Add environment variable: `BOT_TOKEN` = your token
+5. Click **Deploy** — runs 24/7 even when your laptop is off
 
 ---
 
@@ -79,8 +93,9 @@ railway up
 ├── bot.py           # Telegram bot, commands & scheduler
 ├── scraper.py       # Appointment scraper (VFS, TLS, Embassy)
 ├── config.py        # Environment config loader
+├── index.html       # Website landing page
+├── sitemap.xml      # Google sitemap
 ├── requirements.txt
-├── Dockerfile
 └── .env.example
 ```
 
@@ -88,13 +103,13 @@ railway up
 
 ## 🤝 Contributing
 
-PRs welcome! If a portal URL has changed or HTML structure needs updating, open an issue or PR.
+PRs welcome! If a portal URL has changed or the HTML scraping needs updating for a specific country, open an issue or submit a PR.
 
 ---
 
 ## ⚠️ Disclaimer
 
-For personal use only. Respect the terms of service of visa portals. Do not set scan interval below 1 minute.
+For personal use only. Please respect the terms of service of the visa portals. Do not set the scan interval below 1 minute.
 
 ---
 
