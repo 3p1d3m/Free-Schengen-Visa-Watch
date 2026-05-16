@@ -115,4 +115,4 @@ For personal use only. Please respect the terms of service of the visa portals. 
 
 ## 📄 License
 
-MIT — free to use, modify, and share.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/3p1d3m/Free-Schengen-Visa-Watch/blob/main/LICENSE)
